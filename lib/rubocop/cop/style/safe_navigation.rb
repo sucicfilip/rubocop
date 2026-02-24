@@ -245,6 +245,7 @@ module RuboCop
           return false if chain_length(rhs, rhs_receiver) > max_chain_length
           return false if unsafe_method_used?(node, rhs, rhs_receiver.parent)
           return false if rhs.send_type? && rhs.method?(:empty?)
+          return false if receiver_used_in_arguments?(lhs_receiver, rhs_receiver.parent, rhs)
 
           true
         end
@@ -416,6 +417,25 @@ module RuboCop
 
             break if ancestor == method_chain
           end
+        end
+
+        def receiver_used_in_arguments?(receiver, start_node, end_node)
+          node = start_node
+          while node
+            if node.send_type? && node.arguments.any? { |arg| node_uses_receiver?(arg, receiver) }
+              return true
+            end
+
+            break if node.equal?(end_node) || node.parent.nil?
+
+            node = node.parent
+          end
+          false
+        end
+
+        def node_uses_receiver?(node, receiver)
+          matching_nodes?(node, receiver) ||
+            node.each_descendant.any? { |descendant| matching_nodes?(descendant, receiver) }
         end
 
         def max_chain_length

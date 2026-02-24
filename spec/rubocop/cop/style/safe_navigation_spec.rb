@@ -116,6 +116,26 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
     expect_no_offenses('obj.do_something if !obj')
   end
 
+  it 'allows a method call where the guarded object appears in the arguments' do
+    expect_no_offenses('foo.bar(foo.baz) if foo')
+  end
+
+  it 'allows a method call where the guarded object appears in keyword arguments' do
+    expect_no_offenses('foo.bar(key: foo.baz) if foo')
+  end
+
+  it 'allows an && check before a method call where the object appears in the arguments' do
+    expect_no_offenses('foo && foo.bar(foo.baz)')
+  end
+
+  it 'allows an && check before a method call where the object appears in keyword arguments' do
+    expect_no_offenses('foo && foo.bar(key: foo.baz)')
+  end
+
+  it 'allows an object check before a chained call where the object appears in a later argument' do
+    expect_no_offenses('foo.bar(1).baz(foo.qux) if foo')
+  end
+
   it 'allows method calls that do not get called using . safe guarded by an object check' do
     expect_no_offenses('foo + bar if foo')
   end
